@@ -12,7 +12,7 @@ Hover any Waylaid Crate and a block is added to its tooltip. Each bundle the cra
 - **Total cost per bundle:** quantity × Auctionator's latest price.
 - **Cheapest bundle in green.** Bundles without a price are never marked cheapest.
 - **Bag count:** how many of each item you already have in your bags (bank not included).
-- **"no price"** appears when Auctionator has no scan data for the item, or the game hasn't loaded that item yet. The addon learns item names from your bags and from item tooltips you see, and remembers them between sessions.
+- **"no price"** appears when Auctionator has no scan data for the item, or the game hasn't loaded that item yet. The addon learns item names from Auctionator scans (including the summary-mode full scan), your bags and item tooltips you see, and remembers them between sessions. After a full scan, give it a few seconds to look up names before hovering a crate.
 - **Without Auctionator** you still get the bag counts.
 
 ![A crate where Auctionator has no prices yet](screenshots/tooltip.png)
