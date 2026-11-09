@@ -57,3 +57,27 @@ function ns.NameAndIDFromLink(link)
     if type(link) ~= "string" then return nil, nil end
     return link:match("|h%[(.-)%]|h"), tonumber(link:match("item:(%d+)"))
 end
+
+-- Unique item IDs from an Auctionator scan-complete payload. Handles both the
+-- summary (browse) scan, whose entries have itemKey.itemID, and the
+-- replicate/legacy full scan, whose entries have itemLink.
+function ns.ItemIDsFromScan(scanData)
+    local ids, seen = {}, {}
+    if type(scanData) ~= "table" then return ids end
+    for _, entry in ipairs(scanData) do
+        local id
+        if type(entry) == "table" then
+            if type(entry.itemKey) == "table" then
+                id = tonumber(entry.itemKey.itemID)
+            end
+            if not id then
+                id = select(2, ns.NameAndIDFromLink(entry.itemLink))
+            end
+        end
+        if id and not seen[id] then
+            seen[id] = true
+            ids[#ids + 1] = id
+        end
+    end
+    return ids
+end

@@ -40,3 +40,21 @@ if not (name == "Kingsblood" and id == 3356) then os.exit(1) end
 local n2, i2 = ns.NameAndIDFromLink(nil)
 print(((n2 == nil and i2 == nil) and "PASS " or "FAIL ") .. "nil link")
 if n2 or i2 then os.exit(1) end
+
+-- Item IDs from both Auctionator scan payloads:
+--   summary (browse) scan: { itemKey = { itemID = n }, ... }
+--   legacy/replicate full scan: { itemLink = "...", ... }
+local ids = ns.ItemIDsFromScan({
+  { itemKey = { itemID = 3356, itemLevel = 1 }, minPrice = 100 },
+  { itemLink = "|cffffffff|Hitem:3369::::::::60:::::::::|h[Grave Moss]|h|r" },
+  { itemKey = { itemID = 3356 } },   -- duplicate, should appear once
+  { somethingElse = true },
+  "garbage",
+})
+table.sort(ids)
+local okIds = #ids == 2 and ids[1] == 3356 and ids[2] == 3369
+print((okIds and "PASS " or "FAIL ") .. "scan ids")
+if not okIds then os.exit(1) end
+local okNil = #ns.ItemIDsFromScan(nil) == 0
+print((okNil and "PASS " or "FAIL ") .. "scan ids nil")
+if not okNil then os.exit(1) end

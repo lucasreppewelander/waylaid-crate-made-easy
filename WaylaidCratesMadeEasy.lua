@@ -23,9 +23,12 @@ local function IDFromLink(link)
     return select(2, ns.NameAndIDFromLink(link))
 end
 
+local knownIDs = {}  -- itemID -> true for every ID already in DB.names
+
 local function Remember(name, id)
     if DB and name and id then
         DB.names[name] = id
+        knownIDs[id] = true
     end
 end
 
@@ -42,29 +45,102 @@ local function LearnFromBags()
     end
 end
 
--- Auctionator's full scan stores prices by item ID only, and the game can't
--- look up an item by name unless it has loaded that item this session. So
--- learn the name of every item the full scan saw, which lets bundle names
--- resolve to the prices that scan just saved.
-local function LearnFromFullScan(scanData)
-    if type(scanData) ~= "table" then return end
-    for _, entry in ipairs(scanData) do
-        RememberLink(type(entry) == "table" and entry.itemLink)
+---------------------------------------------------------------------------
+-- Learning names from Auctionator scans
+--
+-- Auctionator's scans store prices by item ID only, and the game can't look
+-- up an item by name unless it has loaded that item this session. So when a
+-- scan finishes, look up the name of every item it saw (asking the server for
+-- ones the client hasn't loaded) and remember name -> ID. Bundle names then
+-- resolve to the prices that scan saved.
+---------------------------------------------------------------------------
+
+local GetItemNameByID = C_Item and C_Item.GetItemNameByID
+local RequestLoadItemDataByID = C_Item and C_Item.RequestLoadItemDataByID
+
+local queue = {}    -- item IDs waiting to be looked up
+local pending = {}   -- itemID -> true while waiting for the server
+local ticker
+
+local LOOKUPS_PER_TICK = 50
+local TICK_SECONDS = 0.1
+
+local function ItemName(id)
+    local name = GetItemNameByID and GetItemNameByID(id)
+    if not name then
+        name = GetItemInfo(id)
+    end
+    return name
+end
+
+-- Returns true if the name was known right away
+local function LearnID(id)
+    local name = ItemName(id)
+    if name then
+        Remember(name, id)
+        pending[id] = nil
+        return true
+    end
+    return false
+end
+
+local function ProcessQueue()
+    local n = 0
+    while n < LOOKUPS_PER_TICK and #queue > 0 do
+        local id = table.remove(queue)
+        if not knownIDs[id] and not LearnID(id) then
+            pending[id] = true
+            if RequestLoadItemDataByID then
+                RequestLoadItemDataByID(id)
+            end
+            -- (GetItemInfo in ItemName already asked the server on old clients)
+        end
+        n = n + 1
+    end
+    if #queue == 0 and ticker then
+        ticker:Cancel()
+        ticker = nil
+    end
+end
+
+local function LearnFromScan(scanData)
+    for _, id in ipairs(ns.ItemIDsFromScan(scanData)) do
+        if not knownIDs[id] and not pending[id] then
+            queue[#queue + 1] = id
+        end
+    end
+    if #queue > 0 and not ticker then
+        ticker = C_Timer.NewTicker(TICK_SECONDS, ProcessQueue)
+    end
+end
+
+local function OnItemLoaded(id, success)
+    id = tonumber(id)
+    if id and pending[id] then
+        pending[id] = nil
+        if success ~= false then
+            LearnID(id)
+        end
     end
 end
 
 local function RegisterAuctionatorListener()
-    if not (Auctionator and Auctionator.EventBus and Auctionator.FullScan
-            and Auctionator.FullScan.Events and Auctionator.FullScan.Events.ScanComplete) then
-        return
+    if not (Auctionator and Auctionator.EventBus) then return end
+    local events = {}
+    -- Summary-mode full scan (modern auction house, which Forever uses)
+    if Auctionator.IncrementalScan and Auctionator.IncrementalScan.Events then
+        events[#events + 1] = Auctionator.IncrementalScan.Events.ScanComplete
     end
+    -- Replicate / legacy full scan
+    if Auctionator.FullScan and Auctionator.FullScan.Events then
+        events[#events + 1] = Auctionator.FullScan.Events.ScanComplete
+    end
+    if #events == 0 then return end
     Auctionator.EventBus:Register({
-        ReceiveEvent = function(_, eventName, scanData)
-            if eventName == Auctionator.FullScan.Events.ScanComplete then
-                LearnFromFullScan(scanData)
-            end
+        ReceiveEvent = function(_, _, scanData)
+            LearnFromScan(scanData)
         end,
-    }, { Auctionator.FullScan.Events.ScanComplete })
+    }, events)
 end
 
 local function ResolveItemID(name)
@@ -195,14 +271,22 @@ end
 local f = CreateFrame("Frame")
 f:RegisterEvent("ADDON_LOADED")
 f:RegisterEvent("BAG_UPDATE_DELAYED")
-f:SetScript("OnEvent", function(_, event, arg1)
+-- Item data arriving from the server; which event exists depends on the client
+pcall(f.RegisterEvent, f, "GET_ITEM_INFO_RECEIVED")
+pcall(f.RegisterEvent, f, "ITEM_DATA_LOAD_RESULT")
+f:SetScript("OnEvent", function(_, event, arg1, arg2)
     if event == "ADDON_LOADED" and arg1 == ADDON_NAME then
         WaylaidCratesMadeEasyDB = WaylaidCratesMadeEasyDB or {}
         WaylaidCratesMadeEasyDB.names = WaylaidCratesMadeEasyDB.names or {}
         DB = WaylaidCratesMadeEasyDB
+        for _, id in pairs(DB.names) do
+            knownIDs[id] = true
+        end
         -- OptionalDeps guarantees Auctionator (if installed) loaded before us
         RegisterAuctionatorListener()
     elseif event == "BAG_UPDATE_DELAYED" and DB then
         LearnFromBags()
+    elseif event == "GET_ITEM_INFO_RECEIVED" or event == "ITEM_DATA_LOAD_RESULT" then
+        OnItemLoaded(arg1, arg2)
     end
 end)
