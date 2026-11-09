@@ -20,7 +20,7 @@ local COLOR_BAGS = "|cffa0a0a0"
 local DB -- WaylaidCratesMadeEasyDB: { names = { [itemName] = itemID } }
 
 local function IDFromLink(link)
-    return link and tonumber(link:match("item:(%d+)"))
+    return select(2, ns.NameAndIDFromLink(link))
 end
 
 local function Remember(name, id)
@@ -29,16 +29,42 @@ local function Remember(name, id)
     end
 end
 
+local function RememberLink(link)
+    Remember(ns.NameAndIDFromLink(link))
+end
+
 -- Learn name -> ID for everything in the bags
 local function LearnFromBags()
     for bag = 0, NUM_BAGS do
         for slot = 1, (GetNumSlots(bag) or 0) do
-            local link = GetContainerItemLink(bag, slot)
-            if link then
-                Remember(link:match("|h%[(.-)%]|h"), IDFromLink(link))
-            end
+            RememberLink(GetContainerItemLink(bag, slot))
         end
     end
+end
+
+-- Auctionator's full scan stores prices by item ID only, and the game can't
+-- look up an item by name unless it has loaded that item this session. So
+-- learn the name of every item the full scan saw, which lets bundle names
+-- resolve to the prices that scan just saved.
+local function LearnFromFullScan(scanData)
+    if type(scanData) ~= "table" then return end
+    for _, entry in ipairs(scanData) do
+        RememberLink(type(entry) == "table" and entry.itemLink)
+    end
+end
+
+local function RegisterAuctionatorListener()
+    if not (Auctionator and Auctionator.EventBus and Auctionator.FullScan
+            and Auctionator.FullScan.Events and Auctionator.FullScan.Events.ScanComplete) then
+        return
+    end
+    Auctionator.EventBus:Register({
+        ReceiveEvent = function(_, eventName, scanData)
+            if eventName == Auctionator.FullScan.Events.ScanComplete then
+                LearnFromFullScan(scanData)
+            end
+        end,
+    }, { Auctionator.FullScan.Events.ScanComplete })
 end
 
 local function ResolveItemID(name)
@@ -174,6 +200,8 @@ f:SetScript("OnEvent", function(_, event, arg1)
         WaylaidCratesMadeEasyDB = WaylaidCratesMadeEasyDB or {}
         WaylaidCratesMadeEasyDB.names = WaylaidCratesMadeEasyDB.names or {}
         DB = WaylaidCratesMadeEasyDB
+        -- OptionalDeps guarantees Auctionator (if installed) loaded before us
+        RegisterAuctionatorListener()
     elseif event == "BAG_UPDATE_DELAYED" and DB then
         LearnFromBags()
     end

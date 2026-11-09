@@ -32,3 +32,11 @@ check("odd names", ns.ParseBundles({
 }), { {qty=5, name="Elixir of Lion's Strength"}, {qty=12, name="Bolt of Silk Cloth"} })
 
 check("not a crate", ns.ParseBundles({ "Linen Cloth", "Max Stack: 20" }), nil)
+
+-- Item links -> name, ID (used to learn names from bags and Auctionator scans)
+local name, id = ns.NameAndIDFromLink("|cffffffff|Hitem:3356::::::::60:::::::::|h[Kingsblood]|h|r")
+print(((name == "Kingsblood" and id == 3356) and "PASS " or "FAIL ") .. "link parse")
+if not (name == "Kingsblood" and id == 3356) then os.exit(1) end
+local n2, i2 = ns.NameAndIDFromLink(nil)
+print(((n2 == nil and i2 == nil) and "PASS " or "FAIL ") .. "nil link")
+if n2 or i2 then os.exit(1) end

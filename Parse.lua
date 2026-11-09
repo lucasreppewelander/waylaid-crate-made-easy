@@ -51,3 +51,9 @@ function ns.ParseBundles(texts)
     end
     return nil
 end
+
+-- "|cff..|Hitem:3356:...|h[Kingsblood]|h|r" -> "Kingsblood", 3356
+function ns.NameAndIDFromLink(link)
+    if type(link) ~= "string" then return nil, nil end
+    return link:match("|h%[(.-)%]|h"), tonumber(link:match("item:(%d+)"))
+end
