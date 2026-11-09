@@ -19,10 +19,11 @@ Hover any Waylaid Crate and a block is added to its tooltip. Each bundle the cra
 
 ## Installation
 
-1. Download this repository (**Code → Download ZIP**) and extract it.
-2. Rename the extracted folder to `WaylaidCratesMadeEasy`. WoW only loads an addon whose folder name matches its `.toc` file.
-3. Move it to `World of Warcraft/_forever_/Interface/AddOns/`. You should end up with `AddOns/WaylaidCratesMadeEasy/WaylaidCratesMadeEasy.toc`.
-4. Restart the game or type `/reload`.
+1. **[Download WaylaidCratesMadeEasy.zip](https://github.com/lucasreppewelander/waylaid-crate-made-easy/releases/latest/download/WaylaidCratesMadeEasy.zip)**
+2. Extract it into `World of Warcraft/_forever_/Interface/AddOns/`. You should end up with `AddOns/WaylaidCratesMadeEasy/WaylaidCratesMadeEasy.toc`.
+3. Restart the game or type `/reload`.
+
+Don't use GitHub's green **Code → Download ZIP** button. It names the folder `waylaid-crate-made-easy-main`, and WoW won't load the addon from a folder with that name.
 
 For prices, install [Auctionator](https://www.curseforge.com/wow/addons/auctionator) and run a scan at the auction house.
 
