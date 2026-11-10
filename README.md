@@ -4,7 +4,7 @@ A World of Warcraft Forever addon that shows which bundle is cheapest to fill a 
 
 Hover any Waylaid Crate and a block is added to its tooltip. Each bundle the crate accepts gets its own line, showing how many of that item you have in your bags and what the whole bundle costs at the auction house, using [Auctionator](https://www.curseforge.com/wow/addons/auctionator) prices. The cheapest bundle is shown in green.
 
-![Waylaid Crate tooltip with bundle costs, cheapest bundle in green](screenshots/tooltip-2.png)
+![Waylaid Crate tooltip with bundle costs, cheapest bundle in green](screenshots/tooltip-prices.png)
 
 ## Features
 
