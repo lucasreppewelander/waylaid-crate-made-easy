@@ -71,3 +71,19 @@ costs("some in bags", 40, 13, 3, 120, 81)
 costs("all in bags", 40, 40, 3, 120, 0)
 costs("more than needed", 40, 55, 3, 120, 0)
 costs("no price", 40, 13, nil, nil, nil)
+
+-- Money with coin icons, matching Auctionator's tooltip style
+local G = "|TInterface\\MoneyFrame\\UI-GoldIcon:12:12:0:0|t"
+local S = "|TInterface\\MoneyFrame\\UI-SilverIcon:12:12:0:0|t"
+local C = "|TInterface\\MoneyFrame\\UI-CopperIcon:12:12:0:0|t"
+local function money(name, copper, want)
+  local got = ns.FormatMoney(copper)
+  local ok = got == want
+  print((ok and "PASS " or "FAIL ") .. name .. (ok and "" or (" got: " .. got)))
+  if not ok then os.exit(1) end
+end
+money("copper only", 5, "5 " .. C)
+money("silver pads copper", 1805, "18 " .. S .. " 05 " .. C)
+money("gold pads silver", 1020034, "102 " .. G .. " 00 " .. S .. " 34 " .. C)
+money("zero", 0, "0 " .. C)
+money("fractions floor", 1734.6, "17 " .. S .. " 34 " .. C)

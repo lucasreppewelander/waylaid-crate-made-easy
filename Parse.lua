@@ -89,3 +89,22 @@ function ns.BundleCosts(qty, have, price)
     local missing = math.max(qty - (have or 0), 0)
     return qty * price, missing * price
 end
+
+-- Copper -> "1 [g] 02 [s] 34 [c]" with coin icons, in the same style as
+-- Auctionator's tooltip prices (lower units zero-padded after a higher one).
+local GOLD_ICON = "|TInterface\\MoneyFrame\\UI-GoldIcon:12:12:0:0|t"
+local SILVER_ICON = "|TInterface\\MoneyFrame\\UI-SilverIcon:12:12:0:0|t"
+local COPPER_ICON = "|TInterface\\MoneyFrame\\UI-CopperIcon:12:12:0:0|t"
+
+function ns.FormatMoney(copper)
+    copper = math.floor(copper)
+    local g = math.floor(copper / 10000)
+    local s = math.floor((copper % 10000) / 100)
+    local c = copper % 100
+    if g > 0 then
+        return string.format("%d %s %02d %s %02d %s", g, GOLD_ICON, s, SILVER_ICON, c, COPPER_ICON)
+    elseif s > 0 then
+        return string.format("%d %s %02d %s", s, SILVER_ICON, c, COPPER_ICON)
+    end
+    return string.format("%d %s", c, COPPER_ICON)
+end

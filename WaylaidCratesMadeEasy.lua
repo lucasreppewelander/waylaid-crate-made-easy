@@ -167,17 +167,7 @@ local function GetPrice(itemID)
     return nil
 end
 
-local function FormatMoney(copper)
-    if GetCoinTextureString then
-        return GetCoinTextureString(copper)
-    end
-    local g = math.floor(copper / 10000)
-    local s = math.floor((copper % 10000) / 100)
-    local c = copper % 100
-    if g > 0 then return string.format("%dg %02ds %02dc", g, s, c) end
-    if s > 0 then return string.format("%ds %02dc", s, c) end
-    return string.format("%dc", c)
-end
+local FormatMoney = ns.FormatMoney
 
 local function TooltipTexts(tooltip)
     local texts = {}
