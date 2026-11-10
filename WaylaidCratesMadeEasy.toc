@@ -2,7 +2,7 @@
 ## Title: Waylaid Crates Made Easy
 ## Notes: Shows the Auctionator cost and your bag count for each bundle a Waylaid Crate accepts.
 ## Author: lucas
-## Version: 1.0.2
+## Version: 1.0.3
 ## OptionalDeps: Auctionator
 ## SavedVariables: WaylaidCratesMadeEasyDB
 
