@@ -81,3 +81,11 @@ function ns.ItemIDsFromScan(scanData)
     end
     return ids
 end
+
+-- Full bundle cost, and the cost of only the items you still need to buy.
+-- Both nil when there is no price.
+function ns.BundleCosts(qty, have, price)
+    if not price then return nil, nil end
+    local missing = math.max(qty - (have or 0), 0)
+    return qty * price, missing * price
+end

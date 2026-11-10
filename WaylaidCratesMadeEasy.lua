@@ -202,27 +202,32 @@ local function AddCrateInfo(tooltip)
     tooltip.wcmeAdded = true
 
     local hasAuctionator = Auctionator and Auctionator.API and Auctionator.API.v1
-    local cheapestTotal
+    -- Cheapest = least gold to buy the missing items (bags count toward it)
+    local cheapestToBuy
     for _, b in ipairs(bundles) do
         b.id = ResolveItemID(b.name)
         b.have = b.id and GetItemCount(b.id) or 0
-        local price = GetPrice(b.id)
-        b.total = price and price * b.qty or nil
-        if b.total and (not cheapestTotal or b.total < cheapestTotal) then
-            cheapestTotal = b.total
+        b.total, b.toBuy = ns.BundleCosts(b.qty, b.have, GetPrice(b.id))
+        if b.toBuy and (not cheapestToBuy or b.toBuy < cheapestToBuy) then
+            cheapestToBuy = b.toBuy
         end
     end
 
     tooltip:AddLine(" ")
     tooltip:AddLine(COLOR_HEADER .. (hasAuctionator and "Bundle costs (Auctionator)" or "Bundles") .. "|r")
     for _, b in ipairs(bundles) do
-        local isCheapest = b.total and b.total == cheapestTotal
+        local isCheapest = b.toBuy and b.toBuy == cheapestToBuy
         local color = isCheapest and COLOR_CHEAPEST or COLOR_NORMAL
         local left = string.format("%s%d %s|r %s[%d in bags]|r", color, b.qty, b.name, COLOR_BAGS, b.have)
         local right = ""
         if hasAuctionator then
             if b.total then
                 right = color .. FormatMoney(b.total) .. "|r"
+                if b.toBuy == 0 then
+                    right = right .. COLOR_BAGS .. " (have all)|r"
+                elseif b.toBuy < b.total then
+                    right = right .. COLOR_BAGS .. " (" .. FormatMoney(b.toBuy) .. " to buy)|r"
+                end
             else
                 right = COLOR_MISSING .. "no price|r"
             end

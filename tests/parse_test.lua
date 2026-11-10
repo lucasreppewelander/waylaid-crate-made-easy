@@ -58,3 +58,16 @@ if not okIds then os.exit(1) end
 local okNil = #ns.ItemIDsFromScan(nil) == 0
 print((okNil and "PASS " or "FAIL ") .. "scan ids nil")
 if not okNil then os.exit(1) end
+
+-- Bundle costs: full cost and cost of the part you still need to buy
+local function costs(name, qty, have, price, wantTotal, wantToBuy)
+  local total, toBuy = ns.BundleCosts(qty, have, price)
+  local ok = total == wantTotal and toBuy == wantToBuy
+  print((ok and "PASS " or "FAIL ") .. name .. " (got " .. tostring(total) .. ", " .. tostring(toBuy) .. ")")
+  if not ok then os.exit(1) end
+end
+costs("none in bags", 40, 0, 3, 120, 120)
+costs("some in bags", 40, 13, 3, 120, 81)
+costs("all in bags", 40, 40, 3, 120, 0)
+costs("more than needed", 40, 55, 3, 120, 0)
+costs("no price", 40, 13, nil, nil, nil)
