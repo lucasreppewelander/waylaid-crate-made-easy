@@ -4,3 +4,7 @@ ignore:
   - tests
   - screenshots
   - .gitignore
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
